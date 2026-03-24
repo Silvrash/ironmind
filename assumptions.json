@@ -1,0 +1,56 @@
+{
+  "assumptions": [
+    {
+      "category": "stack",
+      "detail": "analysis.json was not present; used stack decisions from CLAUDE.md: framework=next, hosting=cloud-run, auth=firebase-auth, database=firestore, stripe=required"
+    },
+    {
+      "category": "stack",
+      "detail": "React Native (PRD specified) → mobile-first responsive Next.js web app, as noted in CLAUDE.md unsupported list"
+    },
+    {
+      "category": "stack",
+      "detail": "PostgreSQL (PRD specified) → Firebase Firestore, as noted in CLAUDE.md unsupported list"
+    },
+    {
+      "category": "feature",
+      "detail": "LLM AI coaching (PRD specified) → rule-based progressive overload logic: weight increase suggestions after 3 consecutive top-rep sessions, deload suggestion after 6+ consecutive days, return motivation after 3+ missed days"
+    },
+    {
+      "category": "feature",
+      "detail": "Audio snippets (PRD specified) → text-based Arnold motivational quotes displayed in UI, as noted in CLAUDE.md unsupported list"
+    },
+    {
+      "category": "feature",
+      "detail": "Social/leaderboard features → Phase 2, skipped per CLAUDE.md"
+    },
+    {
+      "category": "feature",
+      "detail": "Stripe integration implemented with placeholder test keys; STRIPE_SECRET_KEY and STRIPE_WEBHOOK_SECRET must be set in production environment for payments to work"
+    },
+    {
+      "category": "feature",
+      "detail": "Pump Score calculated as rule-based metric: percentage of target volume achieved (sets completed × reps × weight vs target), scaled 0-100"
+    },
+    {
+      "category": "feature",
+      "detail": "User level XP system: each completed workout awards 100 base points + bonus for pump score. Levels: Beginner (0-500), Novice (500-1500), Intermediate (1500-3000), Advanced (3000-5000), Elite (5000-10000), Elite Bodybuilder (10000+)"
+    },
+    {
+      "category": "feature",
+      "detail": "Plan assignment during onboarding: beginner experience level → Beginner plan (reduced volume), intermediate → Classic Arnold (high volume), advanced → Advanced plan (2-a-day volume)"
+    },
+    {
+      "category": "feature",
+      "detail": "Workout day cycling is 3-day repeat: Day 1 (Chest+Back) → Day 2 (Shoulders+Arms) → Day 3 (Legs) → repeat. Next day determined by last completed session day number."
+    },
+    {
+      "category": "infra",
+      "detail": "Firestore named database 'iron-mind-2' used throughout. All getFirestore() calls pass the database name as second argument to avoid hitting default database."
+    },
+    {
+      "category": "feature",
+      "detail": "Badges implemented: Iron Starter (first workout), Chest Destroyer (10 chest sessions), Leg Day Hero (10 leg sessions), Volume King (1M total volume), Streak Master (7-day streak)"
+    }
+  ]
+}
