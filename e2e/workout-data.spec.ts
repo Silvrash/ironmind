@@ -1,28 +1,18 @@
 import { test, expect } from '@playwright/test';
 
-test.describe('Workout Page (unauthenticated)', () => {
-  test('workout page redirects or shows auth prompt for unauthenticated users', async ({ page }) => {
-    await page.goto('/workout');
-    // Should either redirect to login or show login prompt
-    const url = page.url();
-    const hasRedirected = url.includes('/login') || url.includes('/');
-    const showsAuth = await page.getByText(/sign in/i).isVisible().catch(() => false);
-    expect(hasRedirected || showsAuth).toBeTruthy();
-  });
-
-  test('dashboard page redirects for unauthenticated users', async ({ page }) => {
-    await page.goto('/dashboard');
-    const url = page.url();
-    const hasRedirected = url.includes('/login') || url.includes('/');
-    const showsAuth = await page.getByText(/sign in/i).isVisible().catch(() => false);
-    expect(hasRedirected || showsAuth).toBeTruthy();
-  });
-
-  test('progress page redirects for unauthenticated users', async ({ page }) => {
-    await page.goto('/progress');
-    const url = page.url();
-    const hasRedirected = url.includes('/login') || url.includes('/');
-    const showsAuth = await page.getByText(/sign in/i).isVisible().catch(() => false);
-    expect(hasRedirected || showsAuth).toBeTruthy();
-  });
+test.describe('Protected routes (unauthenticated)', () => {
+  for (const route of ['/workout', '/dashboard', '/progress']) {
+    test(`${route} redirects unauthenticated users away from protected content`, async ({ page }) => {
+      await page.goto(route);
+      // Wait for any client-side redirect to settle
+      await page.waitForLoadState('networkidle');
+      const url = page.url();
+      // Must have left the protected route — either redirected to /login or landing
+      const redirectedToLogin = url.includes('/login');
+      const redirectedToLanding = url.endsWith('/') || url.endsWith(':3000/');
+      expect(redirectedToLogin || redirectedToLanding).toBeTruthy();
+      // Must NOT still be on the protected route
+      expect(url).not.toContain(route);
+    });
+  }
 });

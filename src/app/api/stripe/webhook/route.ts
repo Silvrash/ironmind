@@ -1,15 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
-import { doc, updateDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { getFirestore } from 'firebase-admin/firestore';
+import { initAdmin } from '@/lib/firebase-admin';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_placeholder', {
+initAdmin();
+
+const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
+if (!stripeSecretKey) {
+  throw new Error('STRIPE_SECRET_KEY environment variable is required');
+}
+
+const stripe = new Stripe(stripeSecretKey, {
   apiVersion: '2026-02-25.clover',
 });
 
-const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET || '';
+const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
 export async function POST(req: NextRequest) {
+  if (!webhookSecret) {
+    console.error('STRIPE_WEBHOOK_SECRET is not configured');
+    return NextResponse.json({ error: 'Webhook not configured' }, { status: 500 });
+  }
+
   const body = await req.text();
   const signature = req.headers.get('stripe-signature');
 
@@ -27,15 +39,16 @@ export async function POST(req: NextRequest) {
   }
 
   try {
+    const adminDb = getFirestore();
+
     switch (event.type) {
       case 'checkout.session.completed': {
-        const session = event.data.object as unknown as { metadata?: Record<string, string>; customer?: string; subscription?: string };
-        const metadata = session.metadata;
-        const userId = metadata?.userId;
+        const session = event.data.object as Stripe.Checkout.Session;
+        const userId = session.metadata?.userId;
 
         if (userId) {
-          const userRef = doc(db, 'users', userId);
-          await updateDoc(userRef, {
+          const userRef = adminDb.collection('users').doc(userId);
+          await userRef.update({
             subscriptionTier: 'premium',
             stripeCustomerId: session.customer,
             stripeSubscriptionId: session.subscription,
@@ -48,7 +61,20 @@ export async function POST(req: NextRequest) {
       case 'customer.subscription.deleted': {
         const subscription = event.data.object as Stripe.Subscription;
         const customerId = subscription.customer as string;
-        console.log(`Subscription cancelled for customer ${customerId}`);
+
+        // Find user by stripeCustomerId and downgrade
+        const usersSnapshot = await adminDb
+          .collection('users')
+          .where('stripeCustomerId', '==', customerId)
+          .limit(1)
+          .get();
+
+        if (!usersSnapshot.empty) {
+          await usersSnapshot.docs[0].ref.update({ subscriptionTier: 'free' });
+          console.log(`Subscription cancelled for customer ${customerId} — downgraded to free`);
+        } else {
+          console.log(`Subscription cancelled for customer ${customerId} — no matching user found`);
+        }
         break;
       }
 
@@ -68,4 +94,3 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Webhook handler failed' }, { status: 500 });
   }
 }
-

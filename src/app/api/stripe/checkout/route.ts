@@ -1,16 +1,44 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
+import { getAuth } from 'firebase-admin/auth';
+import { initAdmin } from '@/lib/firebase-admin';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_placeholder', {
+initAdmin();
+
+const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
+if (!stripeSecretKey) {
+  throw new Error('STRIPE_SECRET_KEY environment variable is required');
+}
+
+const stripe = new Stripe(stripeSecretKey, {
   apiVersion: '2026-02-25.clover',
 });
 
 export async function POST(req: NextRequest) {
+  // Verify Firebase ID token from Authorization header
+  const authHeader = req.headers.get('authorization');
+  if (!authHeader?.startsWith('Bearer ')) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+  const idToken = authHeader.slice(7);
+  let verifiedUid: string;
+  try {
+    const decoded = await getAuth().verifyIdToken(idToken);
+    verifiedUid = decoded.uid;
+  } catch {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   try {
     const { userId, email } = await req.json();
 
     if (!userId || !email) {
       return NextResponse.json({ error: 'Missing userId or email' }, { status: 400 });
+    }
+
+    // Ensure the requester can only create sessions for their own account
+    if (userId !== verifiedUid) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || req.nextUrl.origin;

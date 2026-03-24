@@ -2,25 +2,47 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Users can only read/write their own profile
+    // Users can read/write their own profile, but cannot self-upgrade subscription
     match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read: if request.auth != null && request.auth.uid == userId;
+
+      // Allow create only if subscription tier is 'free' (set on onboarding)
+      allow create: if request.auth != null
+        && request.auth.uid == userId
+        && request.resource.data.subscriptionTier == 'free'
+        && request.resource.data.uid == userId;
+
+      // Allow update of safe fields only — subscriptionTier cannot be changed client-side
+      allow update: if request.auth != null
+        && request.auth.uid == userId
+        // Block any attempt to change subscription-related fields
+        && !('subscriptionTier' in request.resource.data.diff(resource.data).affectedKeys())
+        && !('stripeCustomerId' in request.resource.data.diff(resource.data).affectedKeys())
+        && !('stripeSubscriptionId' in request.resource.data.diff(resource.data).affectedKeys());
     }
 
     // Workout sessions: users can only access their own
     match /workoutSessions/{sessionId} {
-      allow read, write: if request.auth != null
-        && request.auth.uid == resource.data.userId;
+      allow read: if request.auth != null
+        && resource.data.userId == request.auth.uid;
       allow create: if request.auth != null
-        && request.auth.uid == request.resource.data.userId;
+        && request.resource.data.userId == request.auth.uid;
+      // Allow update only for sessions owned by the authenticated user
+      allow update: if request.auth != null
+        && resource.data.userId == request.auth.uid
+        // userId cannot be changed on update
+        && request.resource.data.userId == resource.data.userId;
     }
 
     // Personal records: users can only access their own
     match /personalRecords/{recordId} {
-      allow read, write: if request.auth != null
-        && request.auth.uid == resource.data.userId;
+      allow read: if request.auth != null
+        && resource.data.userId == request.auth.uid;
       allow create: if request.auth != null
-        && request.auth.uid == request.resource.data.userId;
+        && request.resource.data.userId == request.auth.uid;
+      allow update: if request.auth != null
+        && resource.data.userId == request.auth.uid
+        && request.resource.data.userId == resource.data.userId;
     }
 
     // Deny all other access by default

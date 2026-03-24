@@ -1,36 +1,106 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# IronMind — Arnold-Style Bodybuilding Tracker
 
-## Getting Started
+IronMind is a mobile-first web app for serious lifters following Arnold Schwarzenegger-era bodybuilding programs. Log every set, track progressive overload, earn badges, and get rule-based AI coaching — all built on classic Golden Era principles.
 
-First, run the development server:
+**Live:** https://ironmind-s5r2ggkjeq-uc.a.run.app
+
+---
+
+## Prerequisites
+
+- Node.js 20+
+- A Firebase project (Firestore + Firebase Auth enabled)
+- A Stripe account (for premium subscriptions)
+- A Google Cloud project with Cloud Run enabled (for deployment)
+
+---
+
+## Local Setup
 
 ```bash
+# 1. Clone and install
+git clone https://github.com/Silvrash/ironmind
+cd ironmind
+npm install
+
+# 2. Copy the env template and fill in your values
+cp .env.local.example .env.local
+
+# 3. Start the development server
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+# → http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Environment Variables
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Create a `.env.local` file at the project root:
 
-## Learn More
+```bash
+# Firebase — from your Firebase project settings > General > Your apps > SDK setup
+NEXT_PUBLIC_FIREBASE_API_KEY=
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=
+NEXT_PUBLIC_FIREBASE_APP_ID=
 
-To learn more about Next.js, take a look at the following resources:
+# Firebase Admin — from Firebase project settings > Service accounts > Generate new private key
+FIREBASE_ADMIN_PROJECT_ID=
+FIREBASE_ADMIN_CLIENT_EMAIL=
+FIREBASE_ADMIN_PRIVATE_KEY=
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+# Stripe — from your Stripe Dashboard > Developers > API keys
+STRIPE_SECRET_KEY=
+STRIPE_WEBHOOK_SECRET=
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+# Your deployed app URL (used for Stripe redirect URLs)
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+```
 
-## Deploy on Vercel
+---
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Running Tests
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+# Install Playwright browsers (first time only)
+npx playwright install
+
+# Run all e2e tests
+npx playwright test
+
+# Run smoke tests only
+npx playwright test e2e/smoke.spec.ts
+
+# Run with UI
+npx playwright test --ui
+```
+
+---
+
+## Build & Deploy
+
+```bash
+# Build for production
+npm run build
+
+# Deploy to Google Cloud Run
+gcloud builds submit --tag gcr.io/YOUR_PROJECT/ironmind
+gcloud run deploy ironmind --image gcr.io/YOUR_PROJECT/ironmind --platform managed
+```
+
+---
+
+## Tech Stack
+
+| Layer    | Technology                              |
+| -------- | --------------------------------------- |
+| Frontend | Next.js 15 + React 19 + TypeScript      |
+| Styling  | Tailwind CSS + shadcn/ui                |
+| Database | Firebase Firestore                      |
+| Auth     | Firebase Auth                           |
+| Payments | Stripe                                  |
+| Hosting  | Google Cloud Run                        |
+| Tests    | Playwright (30 e2e tests)               |

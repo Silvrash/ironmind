@@ -143,6 +143,12 @@ export default function ActiveWorkoutPage() {
       const docSnap = await getDoc(docRef);
       if (docSnap.exists()) {
         const data = docSnap.data() as WorkoutSession;
+        // Verify ownership: reject sessions that don't belong to the current user
+        if (data.userId !== user.uid) {
+          toast.error('Session not found.');
+          router.push('/workout');
+          return;
+        }
         setSession(data);
         if (data.completed) {
           setShowCompletion(true);
@@ -458,6 +464,7 @@ export default function ActiveWorkoutPage() {
                     step="0.5"
                     value={set.weight || ''}
                     placeholder="0"
+                    aria-label={`Set ${set.setNumber} weight in kilograms`}
                     onChange={(e) => handleSetChange(currentExerciseIndex, setIndex, 'weight', parseFloat(e.target.value) || 0)}
                     className="h-9 bg-zinc-800 border-zinc-700 text-zinc-100 text-center text-sm"
                     disabled={set.completed}
@@ -467,12 +474,14 @@ export default function ActiveWorkoutPage() {
                     min="0"
                     value={set.reps || ''}
                     placeholder="0"
+                    aria-label={`Set ${set.setNumber} reps`}
                     onChange={(e) => handleSetChange(currentExerciseIndex, setIndex, 'reps', parseInt(e.target.value) || 0)}
                     className="h-9 bg-zinc-800 border-zinc-700 text-zinc-100 text-center text-sm"
                     disabled={set.completed}
                   />
                   <button
                     onClick={() => handleCompleteSet(currentExerciseIndex, setIndex)}
+                    aria-label={`Mark set ${set.setNumber} as complete`}
                     className={`h-9 w-9 rounded-lg flex items-center justify-center transition-colors ${
                       set.completed
                         ? 'bg-green-600 text-white hover:bg-green-700'

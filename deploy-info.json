@@ -1,4 +1,6 @@
 {
+  "githubRepo": "https://github.com/Silvrash/ironmind",
   "deployUrl": "https://ironmind-s5r2ggkjeq-uc.a.run.app",
-  "githubRepo": null
+  "smokeTestStatus": "PASSING",
+  "builtAt": "2026-03-24T15:51:00.000Z"
 }

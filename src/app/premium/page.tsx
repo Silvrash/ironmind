@@ -43,9 +43,13 @@ export default function PremiumPage() {
     }
     setLoading(true);
     try {
+      const idToken = await user.getIdToken();
       const res = await fetch('/api/stripe/checkout', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${idToken}`,
+        },
         body: JSON.stringify({ userId: user.uid, email: user.email }),
       });
       if (!res.ok) throw new Error('Failed to create checkout session');
